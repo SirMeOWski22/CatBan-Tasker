@@ -1,6 +1,6 @@
 // Retrieve tasks and nextId from localStorage
-let taskList = JSON.parse(localStorage.getItem('tasks'));
-let nextId = JSON.parse(localStorage.getItem('nextId'));
+let taskList = JSON.parse(localStorage.getItem('tasks')) || [];
+let nextId = JSON.parse(localStorage.getItem('nextId')) || 1;
 
 // Generate a unique task id
 function generateTaskId() {
@@ -11,13 +11,14 @@ function generateTaskId() {
 function createTaskCard(task) {
   const dueDate = dayjs(task.deadline);
   const now = dayjs();
-  let carcClass = 'bg-white';
+  let cardClass = 'bg-white';
 
   if (dueDate.isBefore(now, 'day')) {
-    carcClass = 'bg-danger text-white';
+    cardClass = 'bg-danger text-white';
   } else if (dueDate.diff(now, 'day') <= 3) {
-    carcClass = 'bg-warning text-dark';
+    cardClass = 'bg-warning text-dark';
   }
+
   const cardHtml = `
   <div class= "card mb-3 task-card ${cardClass}" data-id="${task.id}">
   <div class="card=body">
@@ -27,6 +28,7 @@ function createTaskCard(task) {
   <button class="btn btn-danger btn-sm delete-task">Delete</button>
   </div>
   </div>`;
+
   return $(cardHtml);
 }
 
@@ -37,15 +39,17 @@ function renderTaskList() {
   $('#done-cards').empty();
 
   taskList.forEach((task) => {
-    const taskCard = createtaskCard(task);
+    const taskCard = createTaskCard(task);
     $(`#${task.status}-cards`).append(taskCard);
   });
+
   $('.task-card').draggable({
     revert: 'invalid',
     stack: '.task-card',
     cursor: 'move',
     containment: 'document',
   });
+
   $('.delete-task').click(handleDeleteTask);
 }
 
@@ -71,7 +75,7 @@ function handleAddTask(event) {
 
   taskList.push(newTask);
   localStorage.setItem('tasks', JSON.stringify(taskList));
-  localStorage.setItem('nextId', nextId);
+  localStorage.setItem('nextId', JSON.stringify(nextId));
 
   renderTaskList();
   $('#formModal').modal('hide');
@@ -97,7 +101,7 @@ function handleDrop(event, ui) {
     return task;
   });
 
-  localStorage.setItem('task', JSON.stringify(taskList));
+  localStorage.setItem('tasks', JSON.stringify(taskList));
   renderTaskList();
 }
 
@@ -105,7 +109,7 @@ function handleDrop(event, ui) {
 $(document).ready(function () {
   renderTaskList();
 
-  $('.lane').droppable({
+  $('.lane .card-body').droppable({
     accept: '.task-card',
     drop: handleDrop,
   });
